@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ESP32 LED Control</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body>
+
+<h1>ESP32 LED 🌍</h1>
+<p>État : <b id="state">?</b></p>
+
+<button onclick="send('ON')">ON</button>
+<button onclick="send('OFF')">OFF</button>
+
+<script>
+const client = mqtt.connect(
+  "wss://92fa7388d5834bffa514b462e7b817fa.s1.eu.hivemq.cloud:8884/mqtt",
+  {
+    username: "Hugoesp",
+    password: "Kikoloki1"
+  }
+);
+
+client.on("connect", () => {
+  console.log("MQTT connecté");
+  client.subscribe("esp32/led/state");
+});
+
+client.on("message", (topic, msg) => {
+  document.getElementById("state").innerText = msg.toString();
+});
+
+function send(cmd) {
+  client.publish("esp32/led/cmd", cmd);
+}
+</script>
+
+</body>
+</html>
