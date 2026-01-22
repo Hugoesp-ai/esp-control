@@ -2,16 +2,15 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>esp32 P3</title>
+  <title>ESP32 P3</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- MQTT -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
   <style>
     body {
       margin: 0;
-      height: 100vh;
+      min-height: 100vh;
       background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
       font-family: Arial, sans-serif;
       display: flex;
@@ -20,51 +19,45 @@
       color: white;
     }
 
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+
     .card {
       background: #111;
-      padding: 30px;
+      padding: 25px;
       border-radius: 20px;
-      width: 320px;
+      width: 260px;
       text-align: center;
       box-shadow: 0 0 30px rgba(0,0,0,0.6);
     }
 
     h1 {
-      margin-top: 0;
-      margin-bottom: 20px;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 30px;
     }
 
     .state {
-      font-size: 20px;
-      margin-bottom: 25px;
+      font-size: 18px;
+      margin-bottom: 20px;
     }
 
-    .state span {
-      font-weight: bold;
-    }
-
-    .on {
-      color: #00ff88;
-    }
-
-    .off {
-      color: #ff4c4c;
-    }
+    .on { color: #00ff88; font-weight: bold; }
+    .off { color: #ff4c4c; font-weight: bold; }
 
     button {
-      width: 120px;
-      height: 55px;
-      font-size: 18px;
+      width: 110px;
+      height: 50px;
+      font-size: 16px;
       border: none;
       border-radius: 12px;
       cursor: pointer;
-      margin: 10px;
+      margin: 8px;
       color: white;
-      transition: transform 0.1s, box-shadow 0.1s;
-    }
-
-    button:active {
-      transform: scale(0.95);
     }
 
     .btn-on {
@@ -78,56 +71,82 @@
     }
 
     footer {
-      margin-top: 20px;
+      width: 100%;
+      text-align: center;
+      margin-top: 25px;
       font-size: 12px;
       opacity: 0.6;
     }
   </style>
 </head>
+
 <body>
 
+<div class="container">
+  <h1>ESP32 P3 🌍</h1>
+
   <div class="card">
-    <h1>ESP32 P3 🌍</h1>
-
-    <div class="state">
-      État : <span id="state">?</span>
-    </div>
-
-    <button class="btn-on" onclick="send('ON')">ON</button>
-    <button class="btn-off" onclick="send('OFF')">OFF</button>
-
-    <footer>
-      MQTT • GitHub Pages\cree par Hugo Denoncourt
-    </footer>
+    <h3>💧 Remplissage</h3>
+    <div class="state">État : <span id="remplissageState">?</span></div>
+    <button class="btn-on" onclick="send('remplissage','ON')">ON</button>
+    <button class="btn-off" onclick="send('remplissage','OFF')">OFF</button>
   </div>
 
-  <script>
-    const stateEl = document.getElementById("state");
+  <div class="card">
+    <h3>🚰 Pompe</h3>
+    <div class="state">État : <span id="pompeState">?</span></div>
+    <button class="btn-on" onclick="send('pompe','ON')">ON</button>
+    <button class="btn-off" onclick="send('pompe','OFF')">OFF</button>
+  </div>
 
-    const client = mqtt.connect(
-      "wss://92fa7388d5834bffa514b462e7b817fa.s1.eu.hivemq.cloud:8884/mqtt",
-      {
-        username: "Hugoesp",
-        password: "Kikoloki1"
-      }
-    );
+  <div class="card">
+    <h3>🔄 Brassage</h3>
+    <div class="state">État : <span id="brassageState">?</span></div>
+    <button class="btn-on" onclick="send('brassage','ON')">ON</button>
+    <button class="btn-off" onclick="send('brassage','OFF')">OFF</button>
+  </div>
 
-    client.on("connect", () => {
-      console.log("MQTT connecté");
-      client.subscribe("esp32/led/state");
-    });
+  <div class="card">
+    <h3>🌱 Arrosage</h3>
+    <div class="state">État : <span id="arrosageState">?</span></div>
+    <button class="btn-on" onclick="send('arrosage','ON')">ON</button>
+    <button class="btn-off" onclick="send('arrosage','OFF')">OFF</button>
+  </div>
 
-    client.on("message", (topic, msg) => {
-      const value = msg.toString();
-      stateEl.innerText = value;
+  <footer>
+    MQTT • GitHub Pages • créé par Hugo Denoncourt
+  </footer>
+</div>
 
-      stateEl.className = value === "ON" ? "on" : "off";
-    });
+<script>
+const client = mqtt.connect(
+  "wss://92fa7388d5834bffa514b462e7b817fa.s1.eu.hivemq.cloud:8884/mqtt",
+  {
+    username: "Hugoesp",
+    password: "Kikoloki1"
+  }
+);
 
-    function send(cmd) {
-      client.publish("esp32/led/cmd", cmd);
-    }
-  </script>
+client.on("connect", () => {
+  console.log("MQTT connecté");
+  client.subscribe("esp32/+/state");
+});
+
+client.on("message", (topic, msg) => {
+  const value = msg.toString();
+  const device = topic.split("/")[1];
+  const el = document.getElementById(device + "State");
+
+  if (el) {
+    el.innerText = value;
+    el.className = value === "ON" ? "on" : "off";
+  }
+});
+
+function send(device, state) {
+  client.publish(`esp32/${device}/cmd`, state);
+}
+</script>
 
 </body>
 </html>
