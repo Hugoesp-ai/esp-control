@@ -1,152 +1,102 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>ESP32 P3</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>ESP32 P3</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
-  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-      font-family: Arial, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-    }
-
-    .container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-    }
-
-    .card {
-      background: #111;
-      padding: 25px;
-      border-radius: 20px;
-      width: 260px;
-      text-align: center;
-      box-shadow: 0 0 30px rgba(0,0,0,0.6);
-    }
-
-    h1 {
-      width: 100%;
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    .state {
-      font-size: 18px;
-      margin-bottom: 20px;
-    }
-
-    .on { color: #00ff88; font-weight: bold; }
-    .off { color: #ff4c4c; font-weight: bold; }
-
-    button {
-      width: 110px;
-      height: 50px;
-      font-size: 16px;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      margin: 8px;
-      color: white;
-    }
-
-    .btn-on {
-      background: #00aa55;
-      box-shadow: 0 0 15px rgba(0,255,150,0.5);
-    }
-
-    .btn-off {
-      background: #cc3333;
-      box-shadow: 0 0 15px rgba(255,80,80,0.5);
-    }
-
-    footer {
-      width: 100%;
-      text-align: center;
-      margin-top: 25px;
-      font-size: 12px;
-      opacity: 0.6;
-    }
-  </style>
+<style>
+body {
+  margin:0;
+  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  font-family:Arial;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  color:white;
+}
+.card {
+  background:#111;
+  padding:25px;
+  border-radius:20px;
+  width:360px;
+  text-align:center;
+}
+button {
+  width:140px;
+  height:45px;
+  margin:5px;
+  border:none;
+  border-radius:10px;
+  font-size:16px;
+  color:white;
+  cursor:pointer;
+}
+.on {background:#00aa55;}
+.off {background:#cc3333;}
+.state {margin-bottom:10px;}
+</style>
 </head>
 
 <body>
+<div class="card">
+<h2>ESP32 P3 🌱</h2>
 
-<div class="container">
-  <h1>ESP32 P3 🌍</h1>
+<div class="state">🌡️ <span id="temp">--</span> °C</div>
+<div class="state">💧 <span id="hum">--</span> %</div>
 
-  <div class="card">
-    <h3>💧 Remplissage</h3>
-    <div class="state">État : <span id="remplissageState">?</span></div>
-    <button class="btn-on" onclick="send('remplissage','ON')">ON</button>
-    <button class="btn-off" onclick="send('remplissage','OFF')">OFF</button>
-  </div>
+<hr>
 
-  <div class="card">
-    <h3>🚰 Pompe</h3>
-    <div class="state">État : <span id="pompeState">?</span></div>
-    <button class="btn-on" onclick="send('pompe','ON')">ON</button>
-    <button class="btn-off" onclick="send('pompe','OFF')">OFF</button>
-  </div>
+<div id="remp">Remplissage : --</div>
+<button class="on" onclick="send('esp32/remplissage/cmd','ON')">ON</button>
+<button class="off" onclick="send('esp32/remplissage/cmd','OFF')">OFF</button>
 
-  <div class="card">
-    <h3>🔄 Brassage</h3>
-    <div class="state">État : <span id="brassageState">?</span></div>
-    <button class="btn-on" onclick="send('brassage','ON')">ON</button>
-    <button class="btn-off" onclick="send('brassage','OFF')">OFF</button>
-  </div>
+<div id="pompe">Pompe : --</div>
+<button class="on" onclick="send('esp32/pompe/cmd','ON')">ON</button>
+<button class="off" onclick="send('esp32/pompe/cmd','OFF')">OFF</button>
 
-  <div class="card">
-    <h3>🌱 Arrosage</h3>
-    <div class="state">État : <span id="arrosageState">?</span></div>
-    <button class="btn-on" onclick="send('arrosage','ON')">ON</button>
-    <button class="btn-off" onclick="send('arrosage','OFF')">OFF</button>
-  </div>
+<div id="brassage">Brassage : --</div>
+<button class="on" onclick="send('esp32/brassage/cmd','ON')">ON</button>
+<button class="off" onclick="send('esp32/brassage/cmd','OFF')">OFF</button>
 
-  <footer>
-    MQTT • GitHub Pages • créé par Hugo Denoncourt
-  </footer>
+<div id="arrosage">Arrosage : --</div>
+<button class="on" onclick="send('esp32/arrosage/cmd','ON')">ON</button>
+<button class="off" onclick="send('esp32/arrosage/cmd','OFF')">OFF</button>
+
 </div>
 
 <script>
 const client = mqtt.connect(
   "wss://92fa7388d5834bffa514b462e7b817fa.s1.eu.hivemq.cloud:8884/mqtt",
-  {
-    username: "Hugoesp",
-    password: "Kikoloki1"
-  }
+  { username:"Hugoesp", password:"Kikoloki1" }
 );
 
-client.on("connect", () => {
-  console.log("MQTT connecté");
-  client.subscribe("esp32/+/state");
+const ids = {
+  "esp32/remplissage/state":"remp",
+  "esp32/pompe/state":"pompe",
+  "esp32/brassage/state":"brassage",
+  "esp32/arrosage/state":"arrosage"
+};
+
+client.on("connect",()=>{
+  client.subscribe(Object.keys(ids));
+  client.subscribe("esp32/dht/temperature");
+  client.subscribe("esp32/dht/humidity");
 });
 
-client.on("message", (topic, msg) => {
-  const value = msg.toString();
-  const device = topic.split("/")[1];
-  const el = document.getElementById(device + "State");
-
-  if (el) {
-    el.innerText = value;
-    el.className = value === "ON" ? "on" : "off";
-  }
+client.on("message",(topic,msg)=>{
+  const v = msg.toString();
+  if (ids[topic]) document.getElementById(ids[topic]).innerText =
+    ids[topic].split("/")[0] + " : " + v;
+  if (topic==="esp32/dht/temperature") document.getElementById("temp").innerText=v;
+  if (topic==="esp32/dht/humidity") document.getElementById("hum").innerText=v;
 });
 
-function send(device, state) {
-  client.publish(`esp32/${device}/cmd`, state);
+function send(topic,val){
+  client.publish(topic,val);
 }
 </script>
-
 </body>
 </html>
