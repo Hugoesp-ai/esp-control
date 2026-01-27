@@ -1,95 +1,68 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>ESP32 Smart Garden 🌱</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESP32 Control</title>
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-
 <style>
-body {
-  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-  font-family: Arial;
-  color: white;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-.card {
-  background:#111;
-  padding:30px;
-  border-radius:20px;
-  width:340px;
-  text-align:center;
-}
-button {
-  margin:6px;
-  padding:10px 15px;
-  border-radius:10px;
-  border:none;
-  cursor:pointer;
-}
-.on {background:#00aa55;color:white;}
-.off {background:#cc3333;color:white;}
+body{background:#111;color:#fff;font-family:Arial;text-align:center}
+button{padding:12px;margin:5px;border-radius:10px;border:none}
+.on{background:#00c853}
+.off{background:#d50000}
 </style>
 </head>
-
 <body>
-<div class="card">
-<h2>🌍 Smart Garden</h2>
 
-<p>🌡️ Temp : <span id="temp">--</span> °C</p>
-<p>💧 Air : <span id="hum">--</span> %</p>
-<p>🌱 Sol : <span id="soil">--</span> %</p>
+<h1>🌱 Greenhouse</h1>
 
-<hr>
+<div id="buttons"></div>
 
-<div>
-<button class="on" onclick="send('esp32/remplissage/cmd','ON')">Remplissage ON</button>
-<button class="off" onclick="send('esp32/remplissage/cmd','OFF')">OFF</button>
-</div>
+<h2>Capteurs</h2>
+<p>🌱 Soil: <span id="soil">--</span></p>
+<p>🌡️ Temp: <span id="temp">--</span> °C</p>
+<p>💧 Hum: <span id="hum">--</span> %</p>
+<p>🫁 CO₂: <span id="co2">--</span> ppm</p>
 
-<div>
-<button class="on" onclick="send('esp32/pompe/cmd','ON')">Pompe ON</button>
-<button class="off" onclick="send('esp32/pompe/cmd','OFF')">OFF</button>
-</div>
-
-<div>
-<button class="on" onclick="send('esp32/brassage/cmd','ON')">Brassage ON</button>
-<button class="off" onclick="send('esp32/brassage/cmd','OFF')">OFF</button>
-</div>
-
-<div>
-<button class="on" onclick="send('esp32/arrosage/cmd','ON')">Arrosage ON</button>
-<button class="off" onclick="send('esp32/arrosage/cmd','OFF')">OFF</button>
-</div>
-
-</div>
+<button id="cal">Calibrer CO₂ (3s)</button>
+<p id="status"></p>
 
 <script>
-const client = mqtt.connect(
-  "wss://92fa7388d5834bffa514b462e7b817fa.s1.eu.hivemq.cloud:8884/mqtt",
-  { username:"Hugoesp", password:"Kikoloki1" }
-);
-
-client.on("connect",()=>{
-  client.subscribe("esp32/dht/temperature");
-  client.subscribe("esp32/dht/humidity");
-  client.subscribe("esp32/soil/percent");
+const client = mqtt.connect("wss://92fa7388d5834bffa514b462e7b817fa.s1.eu.hivemq.cloud:8884/mqtt",{
+  username:"Hugoesp",password:"Kikoloki1"
 });
 
-client.on("message",(topic,msg)=>{
-  const v = msg.toString();
-  if(topic.includes("temperature")) temp.innerText = v;
-  if(topic.includes("humidity")) hum.innerText = v;
-  if(topic.includes("soil")) soil.innerText = v;
+const relays = [
+ ["Remplissage","esp32/remplissage/cmd"],
+ ["Pompe","esp32/pompe/cmd"],
+ ["Brassage","esp32/brassage/cmd"],
+ ["Arrosage","esp32/arrosage/cmd"]
+];
+
+const btnDiv = document.getElementById("buttons");
+
+relays.forEach(r=>{
+  btnDiv.innerHTML += `
+  <button class="on" onclick="send('${r[1]}','ON')">${r[0]} ON</button>
+  <button class="off" onclick="send('${r[1]}','OFF')">${r[0]} OFF</button><br>`;
 });
 
-function send(topic,val){
-  client.publish(topic,val);
-}
+function send(topic,msg){client.publish(topic,msg)}
+
+client.subscribe("esp32/#");
+
+client.on("message",(t,m)=>{
+  const v=m.toString();
+  if(t.includes("soil")) soil.innerText=v;
+  if(t.includes("temp")) temp.innerText=v;
+  if(t.includes("hum")) hum.innerText=v;
+  if(t.includes("co2/ppm")) co2.innerText=v;
+  if(t.includes("status")) status.innerText="Calibration OK ✅";
+});
+
+let timer;
+cal.onmousedown=()=>{timer=setTimeout(()=>send("esp32/co2/calibrate","START"),3000)}
+cal.onmouseup=()=>clearTimeout(timer);
 </script>
+
 </body>
 </html>
