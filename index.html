@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>ESP32 Control Center 🌱</title>
+<title>ESP32 P3 – Contrôle & Capteurs</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- MQTT -->
@@ -25,105 +25,116 @@ body {
   padding: 25px;
   border-radius: 20px;
   width: 380px;
-  box-shadow: 0 0 25px rgba(0,0,0,0.6);
+  box-shadow: 0 0 30px rgba(0,0,0,0.6);
 }
 
 h1 {
-  margin-top: 0;
   text-align: center;
+  margin-top: 0;
 }
 
 .section {
   margin-bottom: 20px;
 }
 
-.section h2 {
-  font-size: 18px;
-  margin-bottom: 10px;
-}
-
-.value {
+.state {
   font-size: 16px;
-  margin: 4px 0;
+  margin: 5px 0;
 }
 
-.state-on { color: #00ff88; }
-.state-off { color: #ff4c4c; }
-
-.buttons {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-}
+.on { color: #00ff88; }
+.off { color: #ff4c4c; }
 
 button {
-  width: 150px;
+  width: 140px;
   height: 45px;
+  margin: 5px;
   border: none;
   border-radius: 10px;
-  font-size: 15px;
+  font-size: 16px;
   color: white;
   cursor: pointer;
-  margin: 5px;
 }
 
 .btn-on { background: #00aa55; }
 .btn-off { background: #cc3333; }
 
-.calib-normal { background: #ffcc00; color: black; }
-.calib-active { background: #cc0000; }
+.cal-btn {
+  width: 100%;
+  background: #ffcc00;
+  color: black;
+  font-weight: bold;
+}
+
+.cal-btn.calibrating {
+  background: #cc0000;
+  color: white;
+}
 
 footer {
   text-align: center;
   font-size: 12px;
   opacity: 0.6;
+  margin-top: 10px;
 }
 </style>
 </head>
 
 <body>
 <div class="card">
-<h1>ESP32 🌍</h1>
+
+<h1>ESP32 P3 🌱</h1>
 
 <div class="section">
-<h2>📊 Capteurs</h2>
-<div class="value">🌡 Température : <span id="temp">--</span> °C</div>
-<div class="value">💧 Humidité air : <span id="hum">--</span> %</div>
-<div class="value">🌱 Humidité sol : <span id="soil">--</span> %</div>
-<div class="value">🟢 CO₂ : <span id="co2">--</span> ppm</div>
+  <strong>Capteurs</strong>
+  <div class="state">🌡 Température : <span id="temp">--</span> °C</div>
+  <div class="state">💧 Humidité : <span id="hum">--</span> %</div>
+  <div class="state">🌍 Soil : <span id="soil">--</span> %</div>
+  <div class="state">🫁 CO₂ : <span id="co2">--</span> ppm</div>
 </div>
 
 <div class="section">
-<h2>🔌 Relais</h2>
-<div class="buttons">
-<button class="btn-on" onclick="send('esp32/remplissage/cmd','ON')">Remplissage ON</button>
-<button class="btn-off" onclick="send('esp32/remplissage/cmd','OFF')">Remplissage OFF</button>
+  <strong>Relais</strong>
 
-<button class="btn-on" onclick="send('esp32/pompe/cmd','ON')">Pompe ON</button>
-<button class="btn-off" onclick="send('esp32/pompe/cmd','OFF')">Pompe OFF</button>
+  <div>
+    Remplissage :
+    <span id="rempState" class="off">OFF</span><br>
+    <button class="btn-on" onclick="send('esp32/remplissage/cmd','ON')">ON</button>
+    <button class="btn-off" onclick="send('esp32/remplissage/cmd','OFF')">OFF</button>
+  </div>
 
-<button class="btn-on" onclick="send('esp32/brassage/cmd','ON')">Brassage ON</button>
-<button class="btn-off" onclick="send('esp32/brassage/cmd','OFF')">Brassage OFF</button>
+  <div>
+    Pompe :
+    <span id="pompeState" class="off">OFF</span><br>
+    <button class="btn-on" onclick="send('esp32/pompe/cmd','ON')">ON</button>
+    <button class="btn-off" onclick="send('esp32/pompe/cmd','OFF')">OFF</button>
+  </div>
 
-<button class="btn-on" onclick="send('esp32/arrosage/cmd','ON')">Arrosage ON</button>
-<button class="btn-off" onclick="send('esp32/arrosage/cmd','OFF')">Arrosage OFF</button>
-</div>
+  <div>
+    Brassage :
+    <span id="brassageState" class="off">OFF</span><br>
+    <button class="btn-on" onclick="send('esp32/brassage/cmd','ON')">ON</button>
+    <button class="btn-off" onclick="send('esp32/brassage/cmd','OFF')">OFF</button>
+  </div>
+
+  <div>
+    Arrosage :
+    <span id="arrosageState" class="off">OFF</span><br>
+    <button class="btn-on" onclick="send('esp32/arrosage/cmd','ON')">ON</button>
+    <button class="btn-off" onclick="send('esp32/arrosage/cmd','OFF')">OFF</button>
+  </div>
 </div>
 
 <div class="section">
-<h2>⚠ Calibration CO₂</h2>
-<button id="calibBtn" class="calib-normal"
-onmousedown="startCalib()"
-onmouseup="stopCalib()"
-ontouchstart="startCalib()"
-ontouchend="stopCalib()">
-Calibration (3s)
-</button>
+  <button id="calBtn" class="cal-btn">
+    🔧 Calibration CO₂ (3 secondes)
+  </button>
 </div>
 
 <footer>
-MQTT • ESP32 • GitHub Pages
+  MQTT • GitHub Pages • Hugo
 </footer>
+
 </div>
 
 <script>
@@ -137,41 +148,59 @@ const client = mqtt.connect(
 
 client.on("connect", () => {
   client.subscribe([
-    "esp32/temp",
-    "esp32/hum",
+    "esp32/dht/temp",
+    "esp32/dht/hum",
     "esp32/soil",
     "esp32/co2",
-    "esp32/co2/calib/state"
+    "esp32/remplissage/state",
+    "esp32/pompe/state",
+    "esp32/brassage/state",
+    "esp32/arrosage/state"
   ]);
 });
 
 client.on("message", (topic, msg) => {
   const v = msg.toString();
-  if (topic === "esp32/temp") document.getElementById("temp").innerText = v;
-  if (topic === "esp32/hum") document.getElementById("hum").innerText = v;
+
+  if (topic === "esp32/dht/temp") document.getElementById("temp").innerText = v;
+  if (topic === "esp32/dht/hum") document.getElementById("hum").innerText = v;
   if (topic === "esp32/soil") document.getElementById("soil").innerText = v;
   if (topic === "esp32/co2") document.getElementById("co2").innerText = v;
 
-  if (topic === "esp32/co2/calib/state") {
-    const btn = document.getElementById("calibBtn");
-    btn.className = v === "ON" ? "calib-active" : "calib-normal";
-  }
+  if (topic === "esp32/remplissage/state") updateState("rempState", v);
+  if (topic === "esp32/pompe/state") updateState("pompeState", v);
+  if (topic === "esp32/brassage/state") updateState("brassageState", v);
+  if (topic === "esp32/arrosage/state") updateState("arrosageState", v);
 });
 
-function send(topic, value) {
-  client.publish(topic, value);
+function updateState(id, val) {
+  const el = document.getElementById(id);
+  el.innerText = val;
+  el.className = val === "ON" ? "on" : "off";
 }
 
-let calibTimer = null;
-function startCalib() {
-  calibTimer = setTimeout(() => {
-    client.publish("esp32/co2/calib/cmd", "START");
+function send(topic, msg) {
+  client.publish(topic, msg);
+}
+
+// ===== CALIBRATION CO2 =====
+let calTimer;
+const calBtn = document.getElementById("calBtn");
+
+calBtn.addEventListener("mousedown", () => {
+  calTimer = setTimeout(() => {
+    calBtn.classList.add("calibrating");
+    client.publish("esp32/co2/calibrate", "START");
   }, 3000);
-}
+});
 
-function stopCalib() {
-  clearTimeout(calibTimer);
-}
+calBtn.addEventListener("mouseup", () => {
+  clearTimeout(calTimer);
+  setTimeout(() => {
+    calBtn.classList.remove("calibrating");
+  }, 20000);
+});
 </script>
+
 </body>
 </html>
