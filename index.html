@@ -2,203 +2,130 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>ESP32 P3 – Contrôle & Capteurs</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- MQTT -->
+<title>ESP32 Greenhouse</title>
+
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
 <style>
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-  font-family: Arial, sans-serif;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+body{
+  margin:0;
+  font-family:Arial;
+  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  color:white;
+  display:flex;
+  justify-content:center;
 }
 
-.card {
-  background: #111;
-  padding: 25px;
-  border-radius: 20px;
-  width: 380px;
-  box-shadow: 0 0 30px rgba(0,0,0,0.6);
+.card{
+  background:#111;
+  padding:20px;
+  border-radius:20px;
+  margin-top:20px;
+  width:340px;
+  text-align:center;
 }
 
-h1 {
-  text-align: center;
-  margin-top: 0;
+.state{margin:8px;font-size:18px}
+
+button{
+  padding:12px;
+  margin:5px;
+  border:none;
+  border-radius:10px;
+  color:white;
+  font-size:16px;
+  cursor:pointer;
 }
 
-.section {
-  margin-bottom: 20px;
-}
+.on{background:#00aa55}
+.off{background:#cc3333}
+.calib{background:gold;color:black}
+.calibActive{background:red;color:white}
 
-.state {
-  font-size: 16px;
-  margin: 5px 0;
-}
-
-.on { color: #00ff88; }
-.off { color: #ff4c4c; }
-
-button {
-  width: 140px;
-  height: 45px;
-  margin: 5px;
-  border: none;
-  border-radius: 10px;
-  font-size: 16px;
-  color: white;
-  cursor: pointer;
-}
-
-.btn-on { background: #00aa55; }
-.btn-off { background: #cc3333; }
-
-.cal-btn {
-  width: 100%;
-  background: #ffcc00;
-  color: black;
-  font-weight: bold;
-}
-
-.cal-btn.calibrating {
-  background: #cc0000;
-  color: white;
-}
-
-footer {
-  text-align: center;
-  font-size: 12px;
-  opacity: 0.6;
-  margin-top: 10px;
-}
 </style>
 </head>
 
 <body>
+
 <div class="card">
 
-<h1>ESP32 P3 🌱</h1>
+<h2>🌱 Greenhouse</h2>
 
-<div class="section">
-  <strong>Capteurs</strong>
-  <div class="state">🌡 Température : <span id="temp">--</span> °C</div>
-  <div class="state">💧 Humidité : <span id="hum">--</span> %</div>
-  <div class="state">🌍 Soil : <span id="soil">--</span> %</div>
-  <div class="state">🫁 CO₂ : <span id="co2">--</span> ppm</div>
-</div>
+<div class="state">🌡 Temp : <span id="temp">--</span> °C</div>
+<div class="state">💧 Humidité : <span id="hum">--</span> %</div>
+<div class="state">🌱 Sol : <span id="soil">--</span> %</div>
+<div class="state">🫁 CO₂ : <span id="co2">--</span> ppm</div>
+<div class="state">🌞 Lumière : <span id="light">--</span></div>
 
-<div class="section">
-  <strong>Relais</strong>
+<hr>
 
-  <div>
-    Remplissage :
-    <span id="rempState" class="off">OFF</span><br>
-    <button class="btn-on" onclick="send('esp32/remplissage/cmd','ON')">ON</button>
-    <button class="btn-off" onclick="send('esp32/remplissage/cmd','OFF')">OFF</button>
-  </div>
+<h3>Relais</h3>
 
-  <div>
-    Pompe :
-    <span id="pompeState" class="off">OFF</span><br>
-    <button class="btn-on" onclick="send('esp32/pompe/cmd','ON')">ON</button>
-    <button class="btn-off" onclick="send('esp32/pompe/cmd','OFF')">OFF</button>
-  </div>
+<button onclick="send('esp32/remplissage/cmd','ON')" class="on">Remplissage ON</button>
+<button onclick="send('esp32/remplissage/cmd','OFF')" class="off">OFF</button><br>
 
-  <div>
-    Brassage :
-    <span id="brassageState" class="off">OFF</span><br>
-    <button class="btn-on" onclick="send('esp32/brassage/cmd','ON')">ON</button>
-    <button class="btn-off" onclick="send('esp32/brassage/cmd','OFF')">OFF</button>
-  </div>
+<button onclick="send('esp32/pompe/cmd','ON')" class="on">Pompe ON</button>
+<button onclick="send('esp32/pompe/cmd','OFF')" class="off">OFF</button><br>
 
-  <div>
-    Arrosage :
-    <span id="arrosageState" class="off">OFF</span><br>
-    <button class="btn-on" onclick="send('esp32/arrosage/cmd','ON')">ON</button>
-    <button class="btn-off" onclick="send('esp32/arrosage/cmd','OFF')">OFF</button>
-  </div>
-</div>
+<button onclick="send('esp32/brassage/cmd','ON')" class="on">Brassage ON</button>
+<button onclick="send('esp32/brassage/cmd','OFF')" class="off">OFF</button><br>
 
-<div class="section">
-  <button id="calBtn" class="cal-btn">
-    🔧 Calibration CO₂ (3 secondes)
-  </button>
-</div>
+<button onclick="send('esp32/arrosage/cmd','ON')" class="on">Arrosage ON</button>
+<button onclick="send('esp32/arrosage/cmd','OFF')" class="off">OFF</button>
 
-<footer>
-  MQTT • GitHub Pages • Hugo
-</footer>
+<hr>
+
+<button id="calibBtn" class="calib" onclick="toggleCalib()">
+Calibration CO₂
+</button>
 
 </div>
 
 <script>
 const client = mqtt.connect(
-  "wss://92fa7388d5834bffa514b462e7b817fa.s1.eu.hivemq.cloud:8884/mqtt",
-  {
-    username: "Hugoesp",
-    password: "Kikoloki1"
-  }
-);
-
-client.on("connect", () => {
-  client.subscribe([
-    "esp32/dht/temp",
-    "esp32/dht/hum",
-    "esp32/soil",
-    "esp32/co2",
-    "esp32/remplissage/state",
-    "esp32/pompe/state",
-    "esp32/brassage/state",
-    "esp32/arrosage/state"
-  ]);
+"wss://92fa7388d5834bffa514b462e7b817fa.s1.eu.hivemq.cloud:8884/mqtt",
+{
+ username:"Hugoesp",
+ password:"Kikoloki1"
 });
 
-client.on("message", (topic, msg) => {
-  const v = msg.toString();
-
-  if (topic === "esp32/dht/temp") document.getElementById("temp").innerText = v;
-  if (topic === "esp32/dht/hum") document.getElementById("hum").innerText = v;
-  if (topic === "esp32/soil") document.getElementById("soil").innerText = v;
-  if (topic === "esp32/co2") document.getElementById("co2").innerText = v;
-
-  if (topic === "esp32/remplissage/state") updateState("rempState", v);
-  if (topic === "esp32/pompe/state") updateState("pompeState", v);
-  if (topic === "esp32/brassage/state") updateState("brassageState", v);
-  if (topic === "esp32/arrosage/state") updateState("arrosageState", v);
+client.on("connect",()=>{
+ client.subscribe("esp32/#");
 });
 
-function updateState(id, val) {
-  const el = document.getElementById(id);
-  el.innerText = val;
-  el.className = val === "ON" ? "on" : "off";
+function send(topic,msg){
+ client.publish(topic,msg);
 }
 
-function send(topic, msg) {
-  client.publish(topic, msg);
+let calib=false;
+
+function toggleCalib(){
+ calib=!calib;
+ let btn=document.getElementById("calibBtn");
+
+ if(calib){
+   btn.className="calibActive";
+   client.publish("esp32/co2/calibrate","START");
+ }else{
+   btn.className="calib";
+   client.publish("esp32/co2/calibrate","STOP");
+ }
 }
 
-// ===== CALIBRATION CO2 =====
-let calTimer;
-const calBtn = document.getElementById("calBtn");
+client.on("message",(topic,msg)=>{
+ let v=msg.toString();
 
-calBtn.addEventListener("mousedown", () => {
-  calTimer = setTimeout(() => {
-    calBtn.classList.add("calibrating");
-    client.publish("esp32/co2/calibrate", "START");
-  }, 3000);
-});
+ if(topic=="esp32/temp") temp.innerText=v;
+ if(topic=="esp32/hum") hum.innerText=v;
+ if(topic=="esp32/soil") soil.innerText=v;
+ if(topic=="esp32/co2") co2.innerText=v;
 
-calBtn.addEventListener("mouseup", () => {
-  clearTimeout(calTimer);
-  setTimeout(() => {
-    calBtn.classList.remove("calibrating");
-  }, 20000);
+ if(topic=="esp32/light"){
+   light.innerText=v;
+   light.style.color=(v=="DAY")?"yellow":"lightblue";
+ }
 });
 </script>
 
